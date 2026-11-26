@@ -1,0 +1,76 @@
+package com.techbizz.westminster.classpractise.demo.productapi;
+
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class ProductService {
+    private final List<Product> products = new ArrayList<>();
+    private int nextId = 112;
+    private final ProductRepository productRepository;
+
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
+    }
+
+    public List<Product> getAllProducts() {
+        return products;
+    }
+
+    public Product getProductById(int id) {
+        return productRepository
+                .findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+    }
+
+    public List<Product> findByName(String name) {
+        return productRepository.findByName(name);
+    }
+
+    public Product addProduct(CreateProductRequest createProductRequest) {
+        DigitalProduct dp = DigitalProduct.from(nextId++, createProductRequest);
+        return productRepository.save(dp);
+    }
+
+    public List<Product> addGetInheritedProduct() {
+        Product dp = new DigitalProduct(112,
+                "Digital Product",
+                2,
+                true,
+                34.99,
+                "http://xsdfa.com/file/3434",
+                23.33);
+        Product physicalProduct = new PhysicalProduct(122,
+                "Physical Product",
+                3,
+                true,
+                11.99,
+                3.09,
+                "20x10");
+        products.add(dp);
+        products.add(physicalProduct);
+        return this.products;
+    }
+
+    public void deleteProduct(int id) {
+        if (productRepository.findById(id).isEmpty()) {
+            throw new ProductNotFoundException(id);
+        }
+        productRepository.delete(id);
+    }
+
+    public void applyDiscounts(List<Product> products) {
+        products.forEach(product -> {
+            if (product instanceof Discountable) {
+                ((Discountable) product).applyDiscount(0.10);
+            }
+        });
+    }
+
+    public List<Product> getDiscountedProducts() {
+        return products;
+    }
+}
